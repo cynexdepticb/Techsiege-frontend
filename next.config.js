@@ -4,6 +4,12 @@ const BACKEND = process.env.BACKEND_URL ?? "http://localhost:5000";
 const nextConfig = {
   reactStrictMode: true,
   images: { formats: ["image/avif", "image/webp"] },
+  async redirects() {
+    return [
+      // Standalone /teams was folded into the admin shell.
+      { source: "/teams", destination: "/admin", permanent: false },
+    ];
+  },
   async rewrites() {
     return [
       // Proxy all API calls to the Express backend. Frontend fetch("/api/...")
