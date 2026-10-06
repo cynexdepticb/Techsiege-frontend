@@ -506,6 +506,178 @@ function VerifyPanel({ token, teamId, onDone, onDeleted, onError }: { token: str
   );
 }
 
+function TeamsPanel({ token, onError }: { token: string; onError: (m: string) => void }) {
+  const [rows, setRows] = useState<QueueRow[]>([]);
+  const [selected, setSelected] = useState<string | null>(null);
+  const [detail, setDetail] = useState<{ team: Record<string, string>; members: Record<string, string>[] } | null>(null);
+  const [reason, setReason] = useState("");
+  const [busy, setBusy] = useState<string | null>(null);
+
+  const auth = { Authorization: `Bearer ${token}` };
+
+  async function loadAll() {
+    try {
+      const res = await fetch("/api/admin/registrations?status=ALL", { headers: auth });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        onError(data.message ?? "Could not load teams.");
+        return;
+      }
+      setRows(data.registrations);
+    } catch {
+      onError("Could not reach the API.");
+    }
+  }
+
+  useEffect(() => {
+    loadAll();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function openTeam(id: string) {
+    setSelected(id);
+    setDetail(null);
+    try {
+      const res = await fetch(`/api/admin/registrations/${id}`, { headers: auth });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        onError(data.message ?? "Could not load team details.");
+        return;
+      }
+      setDetail({ team: data.team, members: data.members });
+    } catch {
+      onError("Could not reach the API.");
+    }
+  }
+
+  async function decide(decision: "VERIFY" | "REJECT" | "RESUBMIT") {
+    if (!detail) return;
+    if ((decision === "REJECT" || decision === "RESUBMIT") && !reason.trim()) {
+      onError("Add a reason before rejecting or requesting resubmission.");
+      return;
+    }
+    setBusy(decision);
+    try {
+      const res = await fetch(`/api/admin/registrations/${detail.team.id}/decision`, {
+        method: "POST",
+        headers: { ...auth, "Content-Type": "application/json" },
+        body: JSON.stringify({ decision, reason: reason.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        onError(data.message ?? "Decision failed.");
+        return;
+      }
+      setReason("");
+      loadAll();
+      openTeam(detail.team.id);
+    } catch {
+      onError("Could not reach the API.");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  return (
+    <div className="mt-6 grid gap-5 lg:grid-cols-[minmax(0,1fr)_420px]">
+      <section className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.02]">
+        <div className="border-b border-white/10 p-5">
+          <p className="text-xs font-bold uppercase tracking-widest text-accent">All teams</p>
+          <h2 className="font-display mt-1 text-2xl font-bold text-white">Teams</h2>
+        </div>
+        {rows.length === 0 ? (
+          <p className="p-5 text-sm text-muted">No teams registered yet.</p>
+        ) : (
+          <ul className="divide-y divide-white/5">
+            {rows.map((r) => (
+              <li key={r.id}>
+                <button
+                  onClick={() => openTeam(r.id)}
+                  aria-current={selected === r.id ? "true" : undefined}
+                  className={`block w-full p-5 text-left transition hover:bg-white/[0.03] ${selected === r.id ? "bg-accent/[0.05]" : ""}`}
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <p className="font-semibold text-white">{r.team_name}</p>
+                      <p className="mt-1 text-xs text-muted">
+                        <span className="font-mono text-accent">{r.team_code ?? "NO-CODE"}</span>
+                        {" / "}{r.institution}{r.city ? ` / ${r.city}` : ""}
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">{statusBadge(r.registration_status)}{statusBadge(r.payment_status)}</div>
+                  </div>
+                  <p className="mt-2.5 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted">
+                    <span>{TRACK_LABELS[r.track_id as TrackId] ?? r.track_id}</span>
+                    <span className="inline-flex items-center gap-1"><UsersThree size={13} /> {r.member_count}</span>
+                    {r.lead_name && <span>Lead: {r.lead_name}</span>}
+                  </p>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <aside className="h-fit rounded-2xl border border-white/10 bg-white/[0.02] p-5 lg:sticky lg:top-6">
+        {!detail ? (
+          <p className="text-sm text-muted">Select a team to see full details.</p>
+        ) : (
+          <div>
+            <p className="text-xs font-bold uppercase tracking-widest text-accent">Team details</p>
+            <h3 className="font-display mt-1 text-2xl font-bold text-white">{detail.team.team_name}</h3>
+            <p className="mt-1 font-mono text-sm text-accent">{detail.team.team_code}</p>
+            <div className="mt-4 space-y-2 text-sm text-slate-300">
+              <p><span className="text-muted">Institution:</span> {detail.team.institution}</p>
+              <p><span className="text-muted">City:</span> {detail.team.city || "Not provided"}</p>
+              <p><span className="text-muted">Track:</span> {TRACK_LABELS[detail.team.track_id as TrackId] ?? detail.team.track_id}</p>
+              {detail.team.project_idea && <p><span className="text-muted">Idea:</span> {detail.team.project_idea}</p>}
+            </div>
+            <div className="mt-4 flex flex-wrap gap-1.5">
+              {statusBadge(detail.team.registration_status)}{statusBadge(detail.team.payment_status)}
+            </div>
+            <div className="mt-5 rounded-xl border border-white/10 bg-black/30 p-4">
+              <p className="text-xs font-bold uppercase tracking-widest text-muted">Payment verification</p>
+              <textarea
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                rows={2}
+                maxLength={1000}
+                placeholder="Reason for reject or resubmission request"
+                className="mt-3 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:border-accent/60 focus:outline-none"
+              />
+              <div className="mt-3 grid gap-2 sm:grid-cols-3">
+                <button onClick={() => decide("VERIFY")} disabled={!!busy} className="rounded-full bg-lime2 px-3 py-2 text-xs font-bold text-black transition hover:brightness-110 disabled:opacity-60">
+                  {busy === "VERIFY" ? "…" : "Verify"}
+                </button>
+                <button onClick={() => decide("RESUBMIT")} disabled={!!busy} className="rounded-full border border-amber-400/40 px-3 py-2 text-xs font-bold text-amber-200 transition hover:bg-amber-400/10 disabled:opacity-60">
+                  {busy === "RESUBMIT" ? "…" : "Resubmit"}
+                </button>
+                <button onClick={() => decide("REJECT")} disabled={!!busy} className="rounded-full border border-red-400/40 px-3 py-2 text-xs font-bold text-red-300 transition hover:bg-red-400/10 disabled:opacity-60">
+                  {busy === "REJECT" ? "…" : "Reject"}
+                </button>
+              </div>
+            </div>
+            <h4 className="mt-6 text-xs font-bold uppercase tracking-widest text-muted">Members</h4>
+            <ul className="mt-3 space-y-2.5">
+              {detail.members.map((m) => (
+                <li key={m.id} className="rounded-xl border border-white/10 p-3">
+                  <p className="text-sm font-semibold text-white">
+                    {m.full_name}
+                    {m.is_lead && <span className="ml-2 rounded-full bg-accent/15 px-2 py-0.5 text-[10px] text-accent">LEAD</span>}
+                  </p>
+                  <p className="mt-1 text-xs text-muted">{m.email}</p>
+                  {m.branch_year && <p className="mt-0.5 text-xs text-muted">{m.branch_year}</p>}
+                  {m.ticket_id && <p className="mt-1.5 font-mono text-xs text-lime2">{m.ticket_id} / {m.ticket_status}</p>}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </aside>
+    </div>
+  );
+}
+
 function CheckinPanel({ token, onError }: { token: string; onError: (m: string) => void }) {
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
@@ -975,7 +1147,7 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [view, setView] = useState<"analytics" | "payments" | "checkin" | "organizers" | "scores" | "leaderboard" | "sponsors">("analytics");
+  const [view, setView] = useState<"analytics" | "payments" | "teams" | "checkin" | "organizers" | "scores" | "leaderboard" | "sponsors">("analytics");
   const [role, setRole] = useState<"admin" | "volunteer">("admin");
   const section = view === "scores" || view === "leaderboard" ? "evaluation" : view === "sponsors" ? "sponsor" : "registration";
 
@@ -984,7 +1156,7 @@ export default function AdminDashboard() {
       id: "registration" as const, label: "Registration", icon: <ClipboardText size={19} />,
       views: [
         { id: "analytics" as const, label: "Analytics" },
-        { href: "/teams", label: "Teams" },
+        { id: "teams" as const, label: "Teams" },
         { id: "payments" as const, label: "Verification queue" },
         { id: "checkin" as const, label: "Check-in scan" },
         { id: "organizers" as const, label: "Organizers" },
@@ -1009,7 +1181,7 @@ export default function AdminDashboard() {
 
   const sectionTitle = section === "registration" ? "Registration" : section === "evaluation" ? "Evaluation" : "Sponsor";
   const viewTitle =
-    view === "payments" ? "Verification queue" : view === "analytics" ? "Analytics" : view === "checkin" ? "Check-in scan" : view === "scores" ? "Checkpoints & scoring" : view === "leaderboard" ? "Leaderboard" : view === "organizers" ? "Organizers" : "Sponsors";
+    view === "payments" ? "Verification queue" : view === "analytics" ? "Analytics" : view === "teams" ? "Teams" : view === "checkin" ? "Check-in scan" : view === "scores" ? "Checkpoints & scoring" : view === "leaderboard" ? "Leaderboard" : view === "organizers" ? "Organizers" : "Sponsors";
   const [detailTeamId, setDetailTeamId] = useState<string | null>(null);
   const [detailData, setDetailData] = useState<any>(null);
   const [detailLoading, setDetailLoading] = useState(false);
@@ -1171,23 +1343,14 @@ export default function AdminDashboard() {
                 {section === sec.id && (
                   <ul className="ml-5 mt-1 space-y-0.5 border-l border-white/10 pl-2">
                     {sec.views.map((v) => (
-                      <li key={"href" in v ? v.href : v.id}>
-                        {"href" in v ? (
-                          <a
-                            href={v.href}
-                            className="block w-full rounded-lg px-3 py-1.5 text-left text-[13px] text-slate-400 transition hover:bg-white/5 hover:text-slate-200"
-                          >
-                            {v.label}
-                          </a>
-                        ) : (
-                          <button
-                            onClick={() => setView(v.id)}
-                            aria-current={view === v.id ? "page" : undefined}
-                            className={`block w-full rounded-lg px-3 py-1.5 text-left text-[13px] transition ${view === v.id ? "bg-white/10 font-semibold text-white" : "text-slate-400 hover:bg-white/5 hover:text-slate-200"}`}
-                          >
-                            {v.label}
-                          </button>
-                        )}
+                      <li key={v.id}>
+                        <button
+                          onClick={() => setView(v.id)}
+                          aria-current={view === v.id ? "page" : undefined}
+                          className={`block w-full rounded-lg px-3 py-1.5 text-left text-[13px] transition ${view === v.id ? "bg-white/10 font-semibold text-white" : "text-slate-400 hover:bg-white/5 hover:text-slate-200"}`}
+                        >
+                          {v.label}
+                        </button>
                       </li>
                     ))}
                   </ul>
@@ -1247,6 +1410,10 @@ export default function AdminDashboard() {
         <div className="mt-6">
           <PaymentQueue token={token} onError={onError} />
         </div>
+      )}
+
+      {view === "teams" && role === "admin" && (
+        <TeamsPanel token={token} onError={onError} />
       )}
 
       {view === "checkin" && (
