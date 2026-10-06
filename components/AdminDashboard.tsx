@@ -1,7 +1,7 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Download, SignOut, ChartBar, UsersThree, Buildings, ArrowClockwise, ClipboardText, Trophy, Handshake, House, CaretDoubleLeft, CaretDoubleRight, Receipt, Ticket, Paperclip, Warning, Check, Trash } from "@phosphor-icons/react";
+import { Download, SignOut, ChartBar, UsersThree, Buildings, ArrowClockwise, ClipboardText, Trophy, Handshake, House, Receipt, Ticket, Paperclip, Warning, Check, Trash } from "@phosphor-icons/react";
 import { TRACK_LABELS, type TrackId } from "@/lib/tracks";
 import { getSession as getLoginSession, signOut as authSignOut } from "@/lib/auth";
 
@@ -977,7 +977,6 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(false);
   const [view, setView] = useState<"analytics" | "payments" | "checkin" | "organizers" | "scores" | "leaderboard" | "sponsors">("analytics");
   const [role, setRole] = useState<"admin" | "volunteer">("admin");
-  const [shrunk, setShrunk] = useState(false);
   const section = view === "scores" || view === "leaderboard" ? "evaluation" : view === "sponsors" ? "sponsor" : "registration";
 
   const SECTIONS = [
@@ -1142,17 +1141,9 @@ export default function AdminDashboard() {
   return (
     <div className="flex min-h-screen">
       {/* Persistent organizer sidebar. */}
-      <aside className={`${shrunk ? "w-16" : "w-60"} flex shrink-0 flex-col border-r border-white/10 bg-navy/60 transition-all duration-300`} aria-label="Admin sections">
-        <div className={`flex items-center border-b border-white/5 p-3 ${shrunk ? "justify-center" : "justify-between"}`}>
-          {!shrunk && <span className="font-display px-1 text-sm font-bold text-white">Organizer</span>}
-          <button
-            onClick={() => setShrunk(!shrunk)}
-            aria-label={shrunk ? "Expand sidebar" : "Shrink sidebar"}
-            aria-expanded={!shrunk}
-            className="rounded-lg border border-white/10 p-2 text-slate-300 transition hover:border-accent/40 hover:text-white"
-          >
-            {shrunk ? <CaretDoubleRight size={16} /> : <CaretDoubleLeft size={16} />}
-          </button>
+      <aside className="flex w-60 shrink-0 flex-col border-r border-white/10 bg-navy/60" aria-label="Admin sections">
+        <div className="flex items-center justify-between border-b border-white/5 p-3">
+          <span className="font-display px-1 text-sm font-bold text-white">Organizer</span>
         </div>
 
         <nav className="flex-1 space-y-1 overflow-y-auto p-2" aria-label="Sections">
@@ -1163,7 +1154,7 @@ export default function AdminDashboard() {
               className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition ${view === "checkin" ? "bg-accent/15 font-semibold text-accent" : "text-slate-300 hover:bg-white/5 hover:text-white"}`}
             >
               <ClipboardText size={19} className="shrink-0" />
-              {!shrunk && "Check-in scan"}
+              Check-in scan
             </button>
           ) : (
             SECTIONS.map((sec) => (
@@ -1171,13 +1162,13 @@ export default function AdminDashboard() {
                 <button
                   onClick={() => goSection(sec.id)}
                   title={sec.label}
-                  aria-expanded={!shrunk && section === sec.id}
+                  aria-expanded={section === sec.id}
                   className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition ${section === sec.id ? "bg-accent/15 font-semibold text-accent" : "text-slate-300 hover:bg-white/5 hover:text-white"}`}
                 >
                   <span className="shrink-0">{sec.icon}</span>
-                  {!shrunk && <span className="flex-1 text-left">{sec.label}</span>}
+                  <span className="flex-1 text-left">{sec.label}</span>
                 </button>
-                {!shrunk && section === sec.id && (
+                {section === sec.id && (
                   <ul className="ml-5 mt-1 space-y-0.5 border-l border-white/10 pl-2">
                     {sec.views.map((v) => (
                       <li key={"href" in v ? v.href : v.id}>
@@ -1213,7 +1204,7 @@ export default function AdminDashboard() {
             className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-slate-300 transition hover:bg-white/5 hover:text-white"
           >
             <House size={19} className="shrink-0" />
-            {!shrunk && "Back to site"}
+            Back to site
           </a>
           <button
             onClick={signOut}
@@ -1221,7 +1212,7 @@ export default function AdminDashboard() {
             className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-slate-300 transition hover:border-red-400/30 hover:text-red-200"
           >
             <SignOut size={19} className="shrink-0" />
-            {!shrunk && "Sign out"}
+            Sign out
           </button>
         </div>
       </aside>
