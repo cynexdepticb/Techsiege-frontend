@@ -714,16 +714,19 @@ function CheckinPanel({ token, onError }: { token: string; onError: (m: string) 
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<string | null>(null);
+  const [scanning, setScanning] = useState(false);
+  const [scanError, setScanError] = useState<string | null>(null);
 
-  async function checkin(e: React.FormEvent) {
-    e.preventDefault();
+  async function submitToken(value: string) {
+    const clean = value.trim();
+    if (!clean || busy) return;
     setBusy(true);
     setResult(null);
     try {
       const res = await fetch("/api/admin/checkin", {
         method: "POST",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ token: input.trim() }),
+        body: JSON.stringify({ token: clean }),
       });
       const data = await res.json();
       if (!res.ok || !data.ok) {
@@ -739,11 +742,67 @@ function CheckinPanel({ token, onError }: { token: string; onError: (m: string) 
     }
   }
 
+  async function checkin(e: React.FormEvent) {
+    e.preventDefault();
+    await submitToken(input);
+  }
+
+  useEffect(() => {
+    if (!scanning) return;
+    let qr: { stop: () => Promise<void>; clear: () => Promise<void> } | null = null;
+    let stopped = false;
+    let last = "";
+    let lastAt = 0;
+    (async () => {
+      try {
+        const { Html5Qrcode } = await import("html5-qrcode");
+        if (stopped) return;
+        qr = new Html5Qrcode("checkin-qr-reader");
+        await qr.start(
+          { facingMode: "environment" },
+          { fps: 10, qrbox: { width: 250, height: 250 } },
+          (decoded: string) => {
+            const now = Date.now();
+            if (decoded === last && now - lastAt < 3000) return;
+            last = decoded;
+            lastAt = now;
+            setScanning(false);
+            submitToken(decoded);
+          },
+          () => {},
+        );
+      } catch {
+        if (!stopped) setScanError("Camera unavailable — allow camera access and use HTTPS or localhost, or type the code manually.");
+      }
+    })();
+    return () => {
+      stopped = true;
+      if (qr) qr.stop().then(() => qr!.clear()).catch(() => {});
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scanning]);
+
   return (
     <div className="mx-auto max-w-xl">
       <p className="text-sm text-muted">Scan a ticket QR (or type the ticket ID) to mark that participant checked in. Volunteer use only — participants can never self-check-in.</p>
+      <button
+        type="button"
+        onClick={() => {
+          setScanError(null);
+          setScanning(!scanning);
+        }}
+        className={`mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full border px-4 py-2.5 text-sm font-bold transition ${scanning ? "border-red-400/50 text-red-300 hover:bg-red-400/10" : "border-accent/50 text-accent hover:bg-accent/10"}`}
+      >
+        {scanning ? "Stop camera" : "Scan with camera"}
+      </button>
+      {scanning && (
+        <div className="mt-3 overflow-hidden rounded-2xl border border-white/10 bg-black">
+          <div id="checkin-qr-reader" className="w-full" />
+        </div>
+      )}
+      {scanError && <p role="alert" className="mt-3 rounded-xl border border-red-500/40 bg-red-500/10 p-3 text-xs text-red-300">{scanError}</p>}
       <form onSubmit={checkin} className="mt-4 flex gap-2">
-        <input autoFocus value={input} onChange={(e) => setInput(e.target.value)} placeholder="TECHSIEGE:TICKET:… or TSG26-…" className="flex-1 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 font-mono text-sm text-white placeholder:text-slate-500 focus:border-accent/60 focus:outline-none" />
+        <input autoFocus={!scanning} value={input} onChange={(e) => setInput(e.target.value)} placeholder="TECHSIEGE:TICKET:… or TSG26-…" className="flex-1 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 font-mono text-sm text-white placeholder:text-slate-500 focus:border-accent/60 focus:outline-none" />
         <button type="submit" disabled={busy || !input.trim()} className="rounded-full bg-accent px-6 py-2.5 text-sm font-bold text-black transition hover:brightness-110 disabled:opacity-60">
           {busy ? "…" : "Check in"}
         </button>
