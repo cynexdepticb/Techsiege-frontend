@@ -1345,12 +1345,12 @@ export default function AdminDashboard() {
   return (
     <div className="flex min-h-screen">
       {/* Persistent organizer sidebar. */}
-      <aside className="flex w-60 shrink-0 flex-col border-r border-white/10 bg-navy/60" aria-label="Admin sections">
+      <aside className="sticky top-0 flex h-screen w-60 shrink-0 flex-col border-r border-white/10 bg-navy/60" aria-label="Admin sections">
         <div className="flex items-center justify-between border-b border-white/5 p-3">
           <span className="font-display px-1 text-sm font-bold text-white">Organizer</span>
         </div>
 
-        <nav className="flex-1 space-y-1 overflow-y-auto p-2" aria-label="Sections">
+        <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto p-2" aria-label="Sections">
           {role === "volunteer" ? (
             <button
               onClick={() => setView("checkin")}
