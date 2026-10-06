@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { saveSession, type Session } from "@/lib/auth";
 
@@ -22,29 +22,6 @@ export default function LoginForm() {
 
   const input =
     "min-h-11 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-slate-500 transition focus:border-accent/70 focus:outline-none focus:ring-2 focus:ring-accent/20";
-
-  useEffect(() => {
-    const raw = window.location.hash.startsWith("#oauth=")
-      ? decodeURIComponent(window.location.hash.slice("#oauth=".length))
-      : "";
-    if (!raw) return;
-    const params = new URLSearchParams(raw);
-    const session: Session = {
-      token: params.get("token") ?? "",
-      kind: "participant",
-      role: "participant",
-      name: params.get("name") ?? "",
-      email: params.get("email") ?? "",
-      expiresAt: params.get("expiresAt") ?? "",
-    };
-    if (!session.token || !session.email) {
-      setError("Google sign-in failed. Try again.");
-      return;
-    }
-    saveSession(session);
-    window.history.replaceState(null, "", "/login");
-    router.replace("/portal");
-  }, [router]);
 
   async function requestOtp(e?: React.FormEvent) {
     e?.preventDefault();
@@ -168,17 +145,6 @@ export default function LoginForm() {
                   : "Create access before team registration."}
             </p>
           </div>
-
-          {!organizerMode && (
-            <a
-              href="/api/auth/google/start"
-              className="flex min-h-11 w-full items-center justify-center rounded-xl border border-white/15 bg-white/[0.04] px-4 text-sm font-semibold text-white transition hover:border-accent/50 hover:bg-white/[0.08]"
-            >
-              Continue with Google
-            </a>
-          )}
-
-          {!organizerMode && <div className="h-px bg-white/10" />}
 
           {!organizerMode && mode === "signup" && (
             <>

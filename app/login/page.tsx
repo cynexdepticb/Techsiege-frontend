@@ -14,6 +14,12 @@ export default function LoginPage() {
       <div className="bg-grid pointer-events-none absolute inset-0" aria-hidden />
       <div className="pointer-events-none absolute left-1/2 top-1/2 h-[32rem] w-[32rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent/10 blur-[120px]" aria-hidden />
 
+      <a
+        href="/"
+        className="absolute left-4 top-4 z-10 rounded-full border border-white/15 bg-void/80 px-4 py-2 text-xs font-semibold text-slate-200 backdrop-blur-xl transition hover:border-accent/50 hover:text-white sm:left-6 sm:top-6"
+      >
+        ← Back to site
+      </a>
       <section className="glass relative grid w-full max-w-5xl overflow-hidden rounded-2xl lg:grid-cols-[0.95fr_1.05fr]" aria-label="TechSiege account access">
         <div className="border-b border-white/10 p-6 sm:p-8 lg:border-b-0 lg:border-r">
           <a href="/" className="font-display text-lg font-bold tracking-tight text-white">
@@ -31,18 +37,6 @@ export default function LoginPage() {
               Access tickets, event updates, checkpoints, and transparent evaluation once your team is registered.
             </p>
           </div>
-          <dl className="mt-10 grid gap-3 text-sm sm:grid-cols-3 lg:grid-cols-1">
-            {[
-              ["Email code", "No password to remember"],
-              ["Google login", "Fast participant access"],
-              ["Live portal", "Tickets and scores in one place"],
-            ].map(([title, body]) => (
-              <div key={title} className="rounded-xl border border-white/10 bg-black/20 p-4">
-                <dt className="font-semibold text-white">{title}</dt>
-                <dd className="mt-1 text-xs text-muted">{body}</dd>
-              </div>
-            ))}
-          </dl>
         </div>
 
         <div className="flex items-center justify-center p-5 sm:p-8">
