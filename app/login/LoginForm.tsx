@@ -8,7 +8,6 @@ type Mode = "login" | "signup";
 export default function LoginForm() {
   const router = useRouter();
   const search = useSearchParams();
-  const organizerMode = search.get("organizer") === "1";
   const [mode, setMode] = useState<Mode>("login");
   const [fullName, setFullName] = useState("");
   const [college, setCollege] = useState("");
@@ -29,27 +28,22 @@ export default function LoginForm() {
     setError(null);
     setNotice(null);
     try {
-      const purpose = organizerMode ? "organizer" : "participant";
-      const body =
-        purpose === "participant"
-          ? {
-              email: email.trim(),
-              purpose,
-              mode,
-              ...(mode === "signup"
-                ? {
-                    fullName: fullName.trim(),
-                    college: college.trim(),
-                    phone: phone.trim(),
-                  }
-                : {}),
-            }
-          : { email: email.trim(), purpose };
-
       const res = await fetch("/api/auth/request-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
+        // No role sent: the server figures out organizer vs participant
+        // from the email itself.
+        body: JSON.stringify(
+          mode === "signup"
+            ? {
+                email: email.trim(),
+                mode,
+                fullName: fullName.trim(),
+                college: college.trim(),
+                phone: phone.trim(),
+              }
+            : { email: email.trim(), mode },
+        ),
       });
       const data = await res.json();
       if (!res.ok || !data.ok) {
@@ -74,11 +68,10 @@ export default function LoginForm() {
     setBusy(true);
     setError(null);
     try {
-      const purpose = organizerMode ? "organizer" : "participant";
       const res = await fetch("/api/auth/verify-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim(), purpose, code: code.trim() }),
+        body: JSON.stringify({ email: email.trim(), code: code.trim() }),
       });
       const data = await res.json();
       if (!res.ok || !data.ok) {
@@ -113,7 +106,7 @@ export default function LoginForm() {
 
   return (
     <section className="relative w-full max-w-md" aria-label="Sign in form">
-      {!organizerMode && step === "email" && (
+      {step === "email" && (
         <div className="grid grid-cols-2 gap-1 rounded-xl border border-white/10 bg-white/[0.02] p-1" aria-label="Account action">
           {(["login", "signup"] as const).map((item) => (
             <button
@@ -135,18 +128,16 @@ export default function LoginForm() {
         <form onSubmit={requestOtp} className="mt-5 space-y-4">
           <div>
             <h2 className="font-display text-xl font-bold text-white">
-              {organizerMode ? "Organizer sign in" : mode === "login" ? "Welcome back" : "Create participant access"}
+              {mode === "login" ? "Welcome back" : "Create your access"}
             </h2>
             <p className="mt-1 text-sm text-muted">
-              {organizerMode
-                ? "Use your organizer email code."
-                : mode === "login"
-                  ? "Use the email already added to a team. Codes go only to payment-verified teams."
-                  : "Create access before team registration."}
+              {mode === "login"
+                ? "One email box for everyone — organizers land in the dashboard, verified teams land in the portal."
+                : "New here? Tell us who you are, then verify your email with a code."}
             </p>
           </div>
 
-          {!organizerMode && mode === "signup" && (
+          {mode === "signup" && (
             <>
               <label className="block">
                 <span className="mb-1 block text-xs font-semibold text-slate-300">Full name</span>
@@ -164,7 +155,7 @@ export default function LoginForm() {
             <input required type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" placeholder="you@college.edu" className={input} />
           </label>
 
-          {!organizerMode && mode === "signup" && (
+          {mode === "signup" && (
             <label className="block">
               <span className="mb-1 block text-xs font-semibold text-slate-300">Phone</span>
               <input required value={phone} onChange={(e) => setPhone(e.target.value)} autoComplete="tel" placeholder="+91 98765 43210" className={input} />
@@ -172,11 +163,6 @@ export default function LoginForm() {
           )}
 
           {error && <p role="alert" className="rounded-xl border border-red-500/40 bg-red-500/10 p-3 text-sm text-red-300">{error}</p>}
-          {!organizerMode && mode === "login" && (
-            <p className="rounded-xl border border-white/10 bg-white/[0.03] p-3 text-xs leading-relaxed text-muted">
-              No code? Use Sign up first if your email has not been added to a team yet.
-            </p>
-          )}
           <button
             type="submit"
             disabled={busy}
