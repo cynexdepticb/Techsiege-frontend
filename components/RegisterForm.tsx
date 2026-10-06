@@ -1,11 +1,9 @@
 "use client";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
 import Image from "next/image";
 import { Check, X } from "@phosphor-icons/react";
 import { TRACKS } from "@/lib/content";
 import { PAYMENT, SITE } from "@/lib/content";
-import { authFetch, getSession } from "@/lib/auth";
 
 type Member = { fullName: string; email: string; phone: string; branchYear: string };
 const emptyMember = (): Member => ({ fullName: "", email: "", phone: "", branchYear: "" });
@@ -31,56 +29,6 @@ export default function RegisterForm() {
     ackEmailed?: boolean;
     emailNotice?: string | null;
   }>({ type: "idle" });
-  const router = useRouter();
-  const [accountEmail, setAccountEmail] = useState<string | null>(null);
-
-  // Registration needs an account: bounce to login, then come back here.
-  useEffect(() => {
-    const s = getSession();
-    if (!s) {
-      router.replace("/login?next=/register");
-      return;
-    }
-    if (s.kind !== "participant") {
-      setStatus({ type: "error", message: "Organizer accounts can't register teams. Sign in with a participant email." });
-      return;
-    }
-    setAccountEmail(s.email);
-    // Fresh profile (name/college/phone) for prefilling — the saved session
-    // may predate profile capture.
-    authFetch("/api/auth/me")
-      .then((r) => r.json())
-      .then((me) => {
-        const p = me.profile as { full_name?: string; college?: string; phone?: string } | undefined;
-        if (!p) return;
-        setMembers((ms) => {
-          if (!ms[0]) return ms;
-          const next = [...ms];
-          const lead = { ...next[0]! };
-          if (!lead.email) lead.email = s.email;
-          if (!lead.fullName && p.full_name) lead.fullName = p.full_name;
-          if (!lead.phone && p.phone) lead.phone = p.phone;
-          next[0] = lead;
-          return next;
-        });
-        if (p.college) setInstitution((cur) => cur || p.college!);
-      })
-      .catch(() => {});
-    setMembers((ms) => {
-      if (ms[0]) {
-        const next = [...ms];
-        const lead = { ...next[0]! };
-        if (!lead.email) lead.email = s.email;
-        if (!lead.fullName && s.profile?.full_name) lead.fullName = s.profile.full_name;
-        if (!lead.phone && s.profile?.phone) lead.phone = s.profile.phone;
-        next[0] = lead;
-        return next;
-      }
-      return ms;
-    });
-    if (!institution && s.profile?.college) setInstitution(s.profile.college);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const setMember = (i: number, patch: Partial<Member>) =>
     setMembers((ms) => ms.map((m, j) => (j === i ? { ...m, ...patch } : m)));
@@ -103,7 +51,7 @@ export default function RegisterForm() {
       form.set("members", JSON.stringify(members));
       form.set("agreeRules", agree ? "true" : "false");
       form.set("screenshot", screenshot);
-      const res = await authFetch("/api/register", { method: "POST", body: form });
+      const res = await fetch("/api/register", { method: "POST", body: form });
       const data = await res.json();
       if (!res.ok || !data.ok) {
         const msg = data.errors?.map((x: { message: string }) => x.message).join(" · ") ?? data.message ?? "Something went wrong.";
@@ -155,9 +103,10 @@ export default function RegisterForm() {
           <p className="mt-3 text-sm text-muted">{status.emailNotice ?? "Email failed, but your registration is saved."}</p>
         )}
 
-        <a href="/portal" className="mt-4 inline-block rounded-full bg-accent px-8 py-3 text-sm font-bold text-black hover:brightness-110">Open portal</a>
-        <br />
-        <a href="/" className="mt-3 inline-block rounded-full border border-white/15 px-8 py-3 text-sm font-semibold text-white hover:border-accent/50">Back to site</a>
+        <p className="mt-4 rounded-xl border border-white/10 bg-white/[0.03] p-3 text-xs leading-relaxed text-muted">
+          Once the Ops team verifies your payment, sign in with your registered email to open your portal — tickets, live scores and leaderboard.
+        </p>
+        <a href="/" className="mt-4 inline-block rounded-full border border-white/15 px-8 py-3 text-sm font-semibold text-white hover:border-accent/50">Back to site</a>
       </div>
     );
   }
@@ -196,7 +145,7 @@ export default function RegisterForm() {
             <div key={i} className="rounded-xl border border-white/5 bg-white/[0.02] p-4">
               <div className="mb-3 flex items-center justify-between">
                 <p className="text-xs font-bold uppercase tracking-widest text-accent">{i === 0 ? "Team lead" : `Member ${i + 1}`}</p>
-                {members.length > 2 && i !== 0 && (
+                {members.length > 2 && (
                   <button type="button" onClick={() => setMembers((ms) => ms.filter((_, j) => j !== i))} className="inline-flex items-center gap-1 text-xs text-slate-400 hover:text-red-400" aria-label={`Remove member ${i + 1}`}>Remove <X size={12} weight="bold" /></button>
                 )}
               </div>
@@ -204,8 +153,8 @@ export default function RegisterForm() {
                 <label className="block"> <span className="mb-1 block text-xs font-semibold text-slate-300">Full name *</span>
                   <input required minLength={2} value={m.fullName} onChange={(e) => setMember(i, { fullName: e.target.value })} className={input} />
                 </label>
-                <label className="block"> <span className="mb-1 block text-xs font-semibold text-slate-300">Email *{i === 0 && accountEmail ? " (your account)" : ""}</span>
-                  <input required type="email" value={m.email} readOnly={i === 0 && !!accountEmail} title={i === 0 && accountEmail ? "Team lead must be your signed-in account" : undefined} onChange={(e) => setMember(i, { email: e.target.value })} className={`${input} ${i === 0 && accountEmail ? "opacity-70" : ""}`} />
+                <label className="block"> <span className="mb-1 block text-xs font-semibold text-slate-300">Email *</span>
+                  <input required type="email" value={m.email} onChange={(e) => setMember(i, { email: e.target.value })} className={input} />
                 </label>
                 <label className="block"> <span className="mb-1 block text-xs font-semibold text-slate-300">Phone *</span>
                   <input required value={m.phone} onChange={(e) => setMember(i, { phone: e.target.value })} placeholder="+91 …" className={input} />

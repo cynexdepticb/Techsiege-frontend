@@ -141,7 +141,7 @@ export default function LoginForm() {
               {organizerMode
                 ? "Use your organizer email code."
                 : mode === "login"
-                  ? "Use the email already added to a team."
+                  ? "Use the email already added to a team. Codes go only to payment-verified teams."
                   : "Create access before team registration."}
             </p>
           </div>
