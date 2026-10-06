@@ -3,16 +3,11 @@ import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { saveSession, type Session } from "@/lib/auth";
 
-type Mode = "login" | "signup";
-
 export default function LoginForm() {
   const router = useRouter();
   const search = useSearchParams();
-  const [mode, setMode] = useState<Mode>("login");
-  const [fullName, setFullName] = useState("");
-  const [college, setCollege] = useState("");
   const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
+  const [teamCode, setTeamCode] = useState("");
   const [code, setCode] = useState("");
   const [step, setStep] = useState<"email" | "code">("email");
   const [busy, setBusy] = useState(false);
@@ -32,18 +27,8 @@ export default function LoginForm() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         // No role sent: the server figures out organizer vs participant
-        // from the email itself.
-        body: JSON.stringify(
-          mode === "signup"
-            ? {
-                email: email.trim(),
-                mode,
-                fullName: fullName.trim(),
-                college: college.trim(),
-                phone: phone.trim(),
-              }
-            : { email: email.trim(), mode },
-        ),
+        // from the email itself. Team code is required for participants.
+        body: JSON.stringify({ email: email.trim(), teamCode: teamCode.trim() }),
       });
       const data = await res.json();
       if (!res.ok || !data.ok) {
@@ -71,7 +56,7 @@ export default function LoginForm() {
       const res = await fetch("/api/auth/verify-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim(), code: code.trim() }),
+        body: JSON.stringify({ email: email.trim(), code: code.trim(), teamCode: teamCode.trim() }),
       });
       const data = await res.json();
       if (!res.ok || !data.ok) {
@@ -96,71 +81,35 @@ export default function LoginForm() {
     }
   }
 
-  function switchMode(next: Mode) {
-    setMode(next);
-    setStep("email");
-    setCode("");
-    setError(null);
-    setNotice(null);
-  }
-
   return (
     <section className="relative w-full max-w-md" aria-label="Sign in form">
-      {step === "email" && (
-        <div className="grid grid-cols-2 gap-1 rounded-xl border border-white/10 bg-white/[0.02] p-1" aria-label="Account action">
-          {(["login", "signup"] as const).map((item) => (
-            <button
-              key={item}
-              type="button"
-              aria-pressed={mode === item}
-              onClick={() => switchMode(item)}
-              className={`min-h-11 rounded-lg px-4 text-sm font-semibold transition ${
-                mode === item ? "bg-accent text-black" : "text-slate-300 hover:bg-white/5 hover:text-white"
-              }`}
-            >
-              {item === "login" ? "Login" : "Sign up"}
-            </button>
-          ))}
-        </div>
-      )}
-
       {step === "email" ? (
         <form onSubmit={requestOtp} className="mt-5 space-y-4">
           <div>
             <h2 className="font-display text-xl font-bold text-white">
-              {mode === "login" ? "Welcome back" : "Create your access"}
+              Welcome back
             </h2>
             <p className="mt-1 text-sm text-muted">
-              {mode === "login"
-                ? "One email box for everyone — organizers land in the dashboard, verified teams land in the portal."
-                : "New here? Tell us who you are, then verify your email with a code."}
+              One box for everyone — organizers land in the dashboard, verified teams land in the portal.
             </p>
           </div>
 
-          {mode === "signup" && (
-            <>
-              <label className="block">
-                <span className="mb-1 block text-xs font-semibold text-slate-300">Full name</span>
-                <input required minLength={2} maxLength={100} value={fullName} onChange={(e) => setFullName(e.target.value)} autoComplete="name" className={input} />
-              </label>
-              <label className="block">
-                <span className="mb-1 block text-xs font-semibold text-slate-300">College</span>
-                <input required minLength={2} maxLength={160} value={college} onChange={(e) => setCollege(e.target.value)} autoComplete="organization" className={input} />
-              </label>
-            </>
-          )}
-
           <label className="block">
-            <span className="mb-1 block text-xs font-semibold text-slate-300">Email</span>
+            <span className="mb-1 block text-xs font-semibold text-slate-300">Email *</span>
             <input required type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" placeholder="you@college.edu" className={input} />
           </label>
 
-          {mode === "signup" && (
-            <label className="block">
-              <span className="mb-1 block text-xs font-semibold text-slate-300">Phone</span>
-              <input required value={phone} onChange={(e) => setPhone(e.target.value)} autoComplete="tel" placeholder="+91 98765 43210" className={input} />
-            </label>
-          )}
+          <label className="block">
+            <span className="mb-1 block text-xs font-semibold text-slate-300">Team code * <span className="font-normal text-muted">(organizers skip this)</span></span>
+            <input
+              value={teamCode}
+              onChange={(e) => setTeamCode(e.target.value.toUpperCase())}
+              placeholder="TSC-AGE-482"
+              maxLength={16}
+              className={`${input} font-mono uppercase`}
+            />
+          </label>
+          <p className="text-xs text-muted">Participants: find it in your registration email. Codes go only to payment-verified teams.</p>
 
           {error && <p role="alert" className="rounded-xl border border-red-500/40 bg-red-500/10 p-3 text-sm text-red-300">{error}</p>}
           <button
