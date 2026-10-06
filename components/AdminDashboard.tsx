@@ -1,7 +1,7 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Download, SignOut, ChartBar, UsersThree, Buildings, ArrowClockwise, ClipboardText, Trophy, Handshake, House, CaretDoubleLeft, CaretDoubleRight, Receipt, Ticket, Paperclip, Warning, Check } from "@phosphor-icons/react";
+import { Download, SignOut, ChartBar, UsersThree, Buildings, ArrowClockwise, ClipboardText, Trophy, Handshake, House, CaretDoubleLeft, CaretDoubleRight, Receipt, Ticket, Paperclip, Warning, Check, Trash } from "@phosphor-icons/react";
 import { TRACK_LABELS, type TrackId } from "@/lib/tracks";
 import { getSession as getLoginSession, signOut as authSignOut } from "@/lib/auth";
 
@@ -44,11 +44,15 @@ function HBar({ label, value, max }: { label: string; value: number; max: number
 
 function Panel({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-2xl border border-white/10 p-6">
-      <h2 className="text-sm font-semibold text-white">{title}</h2>
+    <section className="rounded-2xl border border-white/10 bg-white/[0.02] p-6 backdrop-blur-sm">
+      <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400">{title}</h2>
       <div className="mt-5">{children}</div>
     </section>
   );
+}
+
+function Skeleton({ className }: { className?: string }) {
+  return <div className={`animate-pulse rounded-xl bg-white/[0.06] ${className ?? "h-24"}`} aria-hidden />;
 }
 
 type QueueRow = {
@@ -65,23 +69,23 @@ const STATUS_FILTERS = ["PENDING", "ALL", "PAYMENT_PENDING", "PAYMENT_VERIFICATI
 
 function statusBadge(s: string) {
   const map: Record<string, string> = {
-    CONFIRMED: "border-lime2/40 text-lime2",
-    PAYMENT_PENDING: "border-amber-400/40 text-amber-200",
-    PAYMENT_VERIFICATION: "border-accent/40 text-accent",
-    RESUBMISSION_REQUIRED: "border-orange-400/40 text-orange-300",
-    PAYMENT_REJECTED: "border-red-400/40 text-red-300",
-    CANCELLED: "border-white/15 text-muted",
-    PENDING: "border-amber-400/40 text-amber-200",
-    VERIFIED: "border-lime2/40 text-lime2",
-    REJECTED: "border-red-400/40 text-red-300",
-    SENT: "border-lime2/40 text-lime2",
-    FAILED: "border-red-400/40 text-red-300",
-    ACK_SENT: "border-lime2/40 text-lime2",
-    ACK_FAILED: "border-red-400/40 text-red-300",
-    NOT_SENT: "border-white/15 text-muted",
+    CONFIRMED: "border-lime2/40 bg-lime2/10 text-lime2",
+    PAYMENT_PENDING: "border-amber-400/40 bg-amber-400/10 text-amber-200",
+    PAYMENT_VERIFICATION: "border-accent/40 bg-accent/10 text-accent",
+    RESUBMISSION_REQUIRED: "border-orange-400/40 bg-orange-400/10 text-orange-300",
+    PAYMENT_REJECTED: "border-red-400/40 bg-red-400/10 text-red-300",
+    CANCELLED: "border-white/15 bg-white/5 text-muted",
+    PENDING: "border-amber-400/40 bg-amber-400/10 text-amber-200",
+    VERIFIED: "border-lime2/40 bg-lime2/10 text-lime2",
+    REJECTED: "border-red-400/40 bg-red-400/10 text-red-300",
+    SENT: "border-lime2/40 bg-lime2/10 text-lime2",
+    FAILED: "border-red-400/40 bg-red-400/10 text-red-300",
+    ACK_SENT: "border-lime2/40 bg-lime2/10 text-lime2",
+    ACK_FAILED: "border-red-400/40 bg-red-400/10 text-red-300",
+    NOT_SENT: "border-white/15 bg-white/5 text-muted",
   };
   return (
-    <span className={`inline-block rounded-full border px-2 py-0.5 font-mono text-[11px] ${map[s] ?? "border-white/15 text-slate-300"}`}>
+    <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 font-mono text-[11px] font-semibold ${map[s] ?? "border-white/15 bg-white/5 text-slate-300"}`}>
       {s}
     </span>
   );
@@ -132,7 +136,12 @@ function PaymentQueue({ token, onError }: { token: string; onError: (m: string) 
         </button>
       </div>
 
-      {loading && <p className="mt-6 text-sm text-muted">Loading queue…</p>}
+      {loading && (
+        <div className="mt-6 space-y-3">
+          <Skeleton className="h-12" />
+          <Skeleton className="h-48" />
+        </div>
+      )}
       {!loading && rows.length === 0 && <p className="mt-6 text-sm text-muted">No registrations in this state.</p>}
 
       {!loading && rows.length > 0 && (
@@ -201,6 +210,10 @@ function PaymentQueue({ token, onError }: { token: string; onError: (m: string) 
           token={token}
           teamId={selected}
           onDone={() => loadQueue(filter)}
+          onDeleted={() => {
+            setSelected(null);
+            loadQueue(filter);
+          }}
           onError={onError}
         />
       )}
@@ -208,7 +221,7 @@ function PaymentQueue({ token, onError }: { token: string; onError: (m: string) 
   );
 }
 
-function VerifyPanel({ token, teamId, onDone, onError }: { token: string; teamId: string; onDone: () => void; onError: (m: string) => void }) {
+function VerifyPanel({ token, teamId, onDone, onDeleted, onError }: { token: string; teamId: string; onDone: () => void; onDeleted: () => void; onError: (m: string) => void }) {
   const [detail, setDetail] = useState<{ team: Record<string, string>; members: Record<string, string>[]; decisions: Record<string, string>[] } | null>(null);
   const [shotUrl, setShotUrl] = useState<string | null>(null);
   const [reason, setReason] = useState("");
@@ -306,6 +319,32 @@ function VerifyPanel({ token, teamId, onDone, onError }: { token: string; teamId
     }
   }
 
+  async function destroy() {
+    if (!window.confirm(`Delete team ${detail?.team?.team_name ?? teamId} permanently? Members, tickets, scores and files are removed. This cannot be undone.`)) {
+      return;
+    }
+    if (!window.confirm("Really delete? Last chance.")) {
+      return;
+    }
+    setBusy("DELETE");
+    try {
+      const res = await fetch(`/api/admin/registrations/${teamId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        onError(data.message ?? "Delete failed.");
+        return;
+      }
+      onDeleted();
+    } catch {
+      onError("Could not reach the verification API.");
+    } finally {
+      setBusy(null);
+    }
+  }
+
   async function downloadTicketPdf(ticketId: string, filename?: string) {
     try {
       const res = await fetch(`/api/admin/tickets/${ticketId}/pdf`, {
@@ -329,7 +368,12 @@ function VerifyPanel({ token, teamId, onDone, onError }: { token: string; teamId
     }
   }
 
-  if (!detail) return <p className="mt-6 text-sm text-muted">Loading dossier…</p>;
+  if (!detail) return (
+    <div className="mt-4 space-y-3">
+      <Skeleton className="h-8 w-1/3" />
+      <Skeleton className="h-64" />
+    </div>
+  );
   const t = detail.team;
 
   return (
@@ -449,6 +493,13 @@ function VerifyPanel({ token, teamId, onDone, onError }: { token: string; teamId
               {result}
             </div>
           )}
+          <button
+            onClick={destroy}
+            disabled={!!busy}
+            className="mt-4 inline-flex w-full items-center justify-center gap-1.5 rounded-full border border-red-500/40 px-4 py-2 text-xs font-semibold text-red-300 transition hover:bg-red-500/10 disabled:opacity-60"
+          >
+            <Trash size={13} /> {busy === "DELETE" ? "Deleting…" : "Delete team permanently"}
+          </button>
         </div>
       </div>
     </section>
@@ -1175,10 +1226,12 @@ export default function AdminDashboard() {
         </div>
       </aside>
 
-      <div className="min-w-0 flex-1 px-4 py-8 sm:px-8">
-      <div className="flex flex-wrap items-end justify-between gap-4">
+      <div className="min-w-0 flex-1 px-4 py-6 sm:px-8">
+      <header className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-accent/[0.10] via-transparent to-violet2/[0.08] p-6 sm:p-7">
+        <div className="pointer-events-none absolute -right-16 -top-16 h-52 w-52 rounded-full bg-accent/10 blur-3xl" aria-hidden />
+        <div className="relative flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-xs font-bold uppercase tracking-widest text-accent">{sectionTitle}</p>
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-accent">{sectionTitle}</p>
           <h1 className="font-display mt-1 text-3xl font-bold tracking-tight text-white">{viewTitle}</h1>
           {stats && (
             <p className="mt-2 text-sm text-muted">
@@ -1187,14 +1240,15 @@ export default function AdminDashboard() {
           )}
         </div>
         <div className="flex gap-2">
-          <button onClick={() => load(token)} className="inline-flex items-center gap-2 rounded-full border border-white/15 px-4 py-2 text-sm text-slate-200 transition hover:border-accent/50">
+          <button onClick={() => load(token)} className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-black/30 px-4 py-2 text-sm text-slate-200 transition hover:border-accent/50">
             <ArrowClockwise size={16} className={loading ? "animate-spin" : ""} /> Refresh
           </button>
-          <button onClick={downloadCsv} className="inline-flex items-center gap-2 rounded-full border border-white/15 px-4 py-2 text-sm text-slate-200 transition hover:border-accent/50">
+          <button onClick={downloadCsv} className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-black/30 px-4 py-2 text-sm text-slate-200 transition hover:border-accent/50">
             <Download size={16} /> Export CSV
           </button>
         </div>
-      </div>
+        </div>
+      </header>
 
       {error && <p role="alert" className="mt-6 rounded-xl border border-red-500/40 bg-red-500/10 p-4 text-sm text-red-300">{error}</p>}
 
