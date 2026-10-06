@@ -515,6 +515,31 @@ function TeamsPanel({ token, onError }: { token: string; onError: (m: string) =>
 
   const auth = { Authorization: `Bearer ${token}` };
 
+  async function destroy(id: string, name: string) {
+    if (!window.confirm(`Delete team ${name} permanently? Members, tickets, scores and files are removed. This cannot be undone.`)) {
+      return;
+    }
+    if (!window.confirm("Really delete? Last chance.")) {
+      return;
+    }
+    setBusy("DELETE");
+    try {
+      const res = await fetch(`/api/admin/registrations/${id}`, { method: "DELETE", headers: auth });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        onError(data.message ?? "Delete failed.");
+        return;
+      }
+      setSelected(null);
+      setDetail(null);
+      loadAll();
+    } catch {
+      onError("Could not reach the API.");
+    } finally {
+      setBusy(null);
+    }
+  }
+
   async function loadAll() {
     try {
       const res = await fetch("/api/admin/registrations?status=ALL", { headers: auth });
@@ -657,6 +682,13 @@ function TeamsPanel({ token, onError }: { token: string; onError: (m: string) =>
                 </button>
               </div>
             </div>
+            <button
+              onClick={() => destroy(detail.team.id, detail.team.team_name)}
+              disabled={!!busy}
+              className="mt-4 inline-flex w-full items-center justify-center gap-1.5 rounded-full border border-red-500/40 px-4 py-2 text-xs font-semibold text-red-300 transition hover:bg-red-500/10 disabled:opacity-60"
+            >
+              <Trash size={13} /> {busy === "DELETE" ? "Deleting…" : "Delete team permanently"}
+            </button>
             <h4 className="mt-6 text-xs font-bold uppercase tracking-widest text-muted">Members</h4>
             <ul className="mt-3 space-y-2.5">
               {detail.members.map((m) => (
