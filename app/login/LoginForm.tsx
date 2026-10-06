@@ -100,7 +100,7 @@ export default function LoginForm() {
           </label>
 
           <label className="block">
-            <span className="mb-1 block text-xs font-semibold text-slate-300">Team code * <span className="font-normal text-muted">(organizers skip this)</span></span>
+            <span className="mb-1 block text-xs font-semibold text-slate-300">Team code *</span>
             <input
               value={teamCode}
               onChange={(e) => setTeamCode(e.target.value.toUpperCase())}
@@ -119,6 +119,12 @@ export default function LoginForm() {
           >
             {busy ? "Sending code..." : "Send email code"}
           </button>
+          <p className="text-center text-xs text-muted">
+            Don&apos;t have a team code?{" "}
+            <a href="/register" className="font-semibold text-accent underline underline-offset-4 hover:brightness-110">
+              Register your team now!
+            </a>
+          </p>
         </form>
       ) : (
         <form onSubmit={verify} className="space-y-5">
