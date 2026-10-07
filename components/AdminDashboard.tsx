@@ -1275,6 +1275,7 @@ function SponsorsPanel({ token, onError }: { token: string; onError: (m: string)
 
 export default function AdminDashboard() {
   const [token, setToken] = useState<string | null>(null);
+  const [authChecked, setAuthChecked] = useState(false);
   const [input, setInput] = useState("");
   const [stats, setStats] = useState<Stats | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -1346,7 +1347,7 @@ export default function AdminDashboard() {
   }, []);
 
   useEffect(() => {
-    // Prefer an organizer login session (/login?organizer=1); fall back to the legacy token.
+    // Prefer an organizer login session (/login); fall back to the legacy token.
     const s = getLoginSession();
     if (s && s.kind === "organizer") {
       setToken(s.token);
@@ -1354,14 +1355,15 @@ export default function AdminDashboard() {
       // Admins land on event analytics; volunteers go straight to check-in.
       setView(s.role === "volunteer" ? "checkin" : "analytics");
       load(s.token);
-      return;
+    } else {
+      const saved = localStorage.getItem(KEY);
+      if (saved) {
+        setToken(saved);
+        setRole("admin");
+        load(saved);
+      }
     }
-    const saved = localStorage.getItem(KEY);
-    if (saved) {
-      setToken(saved);
-      setRole("admin");
-      load(saved);
-    }
+    setAuthChecked(true);
   }, [load]);
 
   useEffect(() => {
@@ -1413,6 +1415,16 @@ export default function AdminDashboard() {
   }
 
   if (!token) {
+    // While the stored session is being checked, show a loader — never the
+    // token form — so refreshes don't flash a login wall at signed-in users.
+    if (!authChecked) {
+      return (
+        <div className="mx-auto max-w-md space-y-4 pt-10" aria-label="Loading dashboard">
+          <Skeleton className="h-10 w-2/3" />
+          <Skeleton className="h-40" />
+        </div>
+      );
+    }
     return (
       <div className="mx-auto max-w-md">
         <h1 className="font-display text-3xl font-bold tracking-tight text-white">Organizer access</h1>
