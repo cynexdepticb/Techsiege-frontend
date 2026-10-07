@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   Download, Ticket, Timer, SignOut, UsersThree, MapPin, CalendarBlank,
-  Check, Clock, Bank, Trophy, Medal, ArrowRight, Ticket as TicketIcon,
+  Check, Clock, Bank, Trophy, Medal, ArrowRight, Ticket as TicketIcon, Gauge,
 } from "@phosphor-icons/react";
 import { TRACK_LABELS, type TrackId } from "@/lib/tracks";
 import { authFetch, getSession, signOut } from "@/lib/auth";
@@ -145,6 +145,12 @@ export default function PortalDashboard() {
   const [live, setLive] = useState<{ total: number; checkpoints: Checkpoint[] } | null>(null);
   const [board, setBoard] = useState<BoardRow[]>([]);
   const [, setTick] = useState(0);
+  const [tab, setTab] = useState("status");
+
+  function scrollTo(id: string, key: string) {
+    setTab(key);
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
 
   useEffect(() => {
     const s = getSession();
@@ -311,9 +317,20 @@ export default function PortalDashboard() {
   ];
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 pb-24 md:pb-0">
+      {/* ── Sticky app bar (mobile) ──────────────────────────── */}
+      <div className="sticky top-0 z-30 -mx-4 border-b border-white/[0.07] bg-void/90 px-4 py-2.5 backdrop-blur-xl sm:-mx-6 sm:px-6 md:hidden">
+        <div className="flex items-center justify-between gap-2">
+          <span className="truncate font-mono text-xs font-bold text-accent">{t.team_code}</span>
+          <span className="shrink-0 font-mono text-xs text-muted">
+            <span className="font-bold text-white">{live?.total ?? 0}</span> pts
+            {myRank ? ` · #${myRank}` : ""}
+          </span>
+        </div>
+      </div>
       {/* ── Hero identity band ─────────────────────────────── */}
       <motion.header
+        id="p-status"
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
@@ -390,7 +407,7 @@ export default function PortalDashboard() {
       <CheckpointMap checkedCount={checkedCount} scoredCount={scoredCount} />
 
       {/* ── Team + event facts ─────────────────────────────── */}
-      <div className="grid gap-5 lg:grid-cols-5">
+      <div id="p-team" className="grid scroll-mt-20 gap-5 lg:grid-cols-5">
         <Card className="lg:col-span-3">
           <CardTitle icon={<UsersThree size={16} />} title={`Team · ${data.members.length} members`} />
           <ul className="space-y-3">
@@ -457,6 +474,7 @@ export default function PortalDashboard() {
 
           {board.length > 0 && (
             <Card>
+              <div id="p-board" className="scroll-mt-20" />
               <CardTitle icon={<Medal size={16} />} title="Leaderboard" aside={<span className="flex items-center gap-1.5 text-[11px] text-lime2"><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-lime2" /> live</span>} />
               <ol className="space-y-1.5">
                 {board.slice(0, 8).map((b) => (
@@ -477,6 +495,7 @@ export default function PortalDashboard() {
 
       {/* ── Live checkpoints ───────────────────────────────── */}
       <Card>
+        <div id="p-scores" className="scroll-mt-20" />
         <CardTitle
           icon={<Timer size={16} />}
           title="Checkpoints"
@@ -535,6 +554,34 @@ export default function PortalDashboard() {
       <p className="pb-2 text-center text-xs text-muted">
         {data.dates} / {data.venue}
       </p>
+
+      {/* ── Bottom tab bar (mobile app feel) ─────────────────── */}
+      <nav
+        className="fixed inset-x-0 bottom-0 z-30 border-t border-white/10 bg-void/95 backdrop-blur-xl md:hidden"
+        style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+        aria-label="Portal sections"
+      >
+        <div className="grid grid-cols-4">
+          {[
+            { key: "status", label: "Status", icon: <Gauge size={20} />, id: "p-status" },
+            { key: "team", label: "Team", icon: <UsersThree size={20} />, id: "p-team" },
+            { key: "scores", label: "Scores", icon: <Timer size={20} />, id: "p-scores" },
+            { key: "board", label: "Board", icon: <Trophy size={20} />, id: "p-board" },
+          ].map((item) => (
+            <button
+              key={item.key}
+              onClick={() => scrollTo(item.id, item.key)}
+              aria-current={tab === item.key ? "page" : undefined}
+              className={`flex min-h-14 flex-col items-center justify-center gap-0.5 py-2 text-[11px] font-semibold transition ${
+                tab === item.key ? "text-accent" : "text-slate-400 active:text-slate-200"
+              }`}
+            >
+              {item.icon}
+              {item.label}
+            </button>
+          ))}
+        </div>
+      </nav>
     </div>
   );
 }

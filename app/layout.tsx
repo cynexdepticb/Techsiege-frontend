@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Space_Grotesk, Inter } from "next/font/google";
 import "./globals.css";
 import { SITE } from "@/lib/content";
@@ -15,6 +15,13 @@ export const metadata: Metadata = {
     description: "24-hour offline AI-agent hackathon · Mangaluru · 200+ participants · 6 tracks",
     type: "website",
   },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#04060d",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
