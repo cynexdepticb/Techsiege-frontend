@@ -1,7 +1,7 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Download, SignOut, ChartBar, UsersThree, Buildings, ArrowClockwise, ClipboardText, Trophy, Handshake, House, Receipt, Ticket, Paperclip, Warning, Check, Trash, List } from "@phosphor-icons/react";
+import { Download, SignOut, ChartBar, UsersThree, Buildings, ClipboardText, Trophy, Handshake, House, Receipt, Ticket, Paperclip, Warning, Check, Trash, List } from "@phosphor-icons/react";
 import { TRACK_LABELS, type TrackId } from "@/lib/tracks";
 import { getSession as getLoginSession, signOut as authSignOut } from "@/lib/auth";
 
@@ -131,9 +131,6 @@ function PaymentQueue({ token, onError }: { token: string; onError: (m: string) 
             {f}
           </button>
         ))}
-        <button onClick={() => loadQueue(filter)} className="ml-auto inline-flex items-center gap-2 rounded-full border border-white/15 px-4 py-1.5 text-xs text-slate-200 hover:border-accent/50">
-          <ArrowClockwise size={14} className={loading ? "animate-spin" : ""} /> Refresh
-        </button>
       </div>
 
       {loading && (
@@ -1558,9 +1555,6 @@ export default function AdminDashboard() {
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
-          <button onClick={() => load(token)} className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-black/30 px-4 py-2 text-sm text-slate-200 transition hover:border-accent/50">
-            <ArrowClockwise size={16} className={loading ? "animate-spin" : ""} /> Refresh
-          </button>
           <button onClick={downloadCsv} className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-black/30 px-4 py-2 text-sm text-slate-200 transition hover:border-accent/50">
             <Download size={16} /> Export CSV
           </button>
