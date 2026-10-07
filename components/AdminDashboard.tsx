@@ -1,7 +1,7 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Download, SignOut, ChartBar, UsersThree, Buildings, ArrowClockwise, ClipboardText, Trophy, Handshake, House, Receipt, Ticket, Paperclip, Warning, Check, Trash } from "@phosphor-icons/react";
+import { Download, SignOut, ChartBar, UsersThree, Buildings, ArrowClockwise, ClipboardText, Trophy, Handshake, House, Receipt, Ticket, Paperclip, Warning, Check, Trash, List } from "@phosphor-icons/react";
 import { TRACK_LABELS, type TrackId } from "@/lib/tracks";
 import { getSession as getLoginSession, signOut as authSignOut } from "@/lib/auth";
 
@@ -749,7 +749,7 @@ function CheckinPanel({ token, onError }: { token: string; onError: (m: string) 
 
   useEffect(() => {
     if (!scanning) return;
-    let qr: { stop: () => Promise<void>; clear: () => Promise<void> } | null = null;
+    let qr: import("html5-qrcode").Html5Qrcode | null = null;
     let stopped = false;
     let last = "";
     let lastAt = 0;
@@ -801,8 +801,8 @@ function CheckinPanel({ token, onError }: { token: string; onError: (m: string) 
         </div>
       )}
       {scanError && <p role="alert" className="mt-3 rounded-xl border border-red-500/40 bg-red-500/10 p-3 text-xs text-red-300">{scanError}</p>}
-      <form onSubmit={checkin} className="mt-4 flex gap-2">
-        <input autoFocus={!scanning} value={input} onChange={(e) => setInput(e.target.value)} placeholder="TECHSIEGE:TICKET:… or TSG26-…" className="flex-1 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 font-mono text-sm text-white placeholder:text-slate-500 focus:border-accent/60 focus:outline-none" />
+      <form onSubmit={checkin} className="mt-4 flex flex-col gap-2 sm:flex-row">
+        <input autoFocus={!scanning} value={input} onChange={(e) => setInput(e.target.value)} placeholder="TECHSIEGE:TICKET:… or TSG26-…" className="min-w-0 flex-1 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 font-mono text-sm text-white placeholder:text-slate-500 focus:border-accent/60 focus:outline-none" />
         <button type="submit" disabled={busy || !input.trim()} className="rounded-full bg-accent px-6 py-2.5 text-sm font-bold text-black transition hover:brightness-110 disabled:opacity-60">
           {busy ? "…" : "Check in"}
         </button>
@@ -1239,6 +1239,7 @@ export default function AdminDashboard() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [view, setView] = useState<"analytics" | "payments" | "teams" | "checkin" | "organizers" | "scores" | "leaderboard" | "sponsors">("analytics");
+  const [navOpen, setNavOpen] = useState(false);
   const [role, setRole] = useState<"admin" | "volunteer">("admin");
   const section = view === "scores" || view === "leaderboard" ? "evaluation" : view === "sponsors" ? "sponsor" : "registration";
 
@@ -1268,6 +1269,12 @@ export default function AdminDashboard() {
 
   function goSection(id: "registration" | "evaluation" | "sponsor") {
     setView(id === "registration" ? "analytics" : id === "evaluation" ? "scores" : "sponsors");
+    setNavOpen(false);
+  }
+
+  function pick(v: typeof view) {
+    setView(v);
+    setNavOpen(false);
   }
 
   const sectionTitle = section === "registration" ? "Registration" : section === "evaluation" ? "Evaluation" : "Sponsor";
@@ -1403,8 +1410,12 @@ export default function AdminDashboard() {
 
   return (
     <div className="flex min-h-screen">
-      {/* Persistent organizer sidebar. */}
-      <aside className="sticky top-0 flex h-screen w-60 shrink-0 flex-col border-r border-white/10 bg-navy/60" aria-label="Admin sections">
+      {/* Mobile overlay for the drawer. */}
+      {navOpen && (
+        <div onClick={() => setNavOpen(false)} className="fixed inset-0 z-30 bg-black/70 md:hidden" aria-hidden />
+      )}
+      {/* Persistent sidebar on desktop, slide-over drawer on mobile. */}
+      <aside className={`fixed inset-y-0 left-0 z-40 flex h-screen w-60 shrink-0 flex-col border-r border-white/10 bg-navy transition-transform duration-300 md:sticky md:top-0 md:z-auto md:translate-x-0 ${navOpen ? "translate-x-0" : "-translate-x-full"}`} aria-label="Admin sections">
         <div className="flex items-center justify-between border-b border-white/5 p-3">
           <span className="font-display px-1 text-sm font-bold text-white">Organizer</span>
         </div>
@@ -1412,7 +1423,7 @@ export default function AdminDashboard() {
         <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto p-2" aria-label="Sections">
           {role === "volunteer" ? (
             <button
-              onClick={() => setView("checkin")}
+              onClick={() => pick("checkin")}
               title="Check-in scan"
               className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition ${view === "checkin" ? "bg-accent/15 font-semibold text-accent" : "text-slate-300 hover:bg-white/5 hover:text-white"}`}
             >
@@ -1436,7 +1447,7 @@ export default function AdminDashboard() {
                     {sec.views.map((v) => (
                       <li key={v.id}>
                         <button
-                          onClick={() => setView(v.id)}
+                          onClick={() => pick(v.id)}
                           aria-current={view === v.id ? "page" : undefined}
                           className={`block w-full rounded-lg px-3 py-1.5 text-left text-[13px] transition ${view === v.id ? "bg-white/10 font-semibold text-white" : "text-slate-400 hover:bg-white/5 hover:text-slate-200"}`}
                         >
@@ -1475,16 +1486,25 @@ export default function AdminDashboard() {
       <header className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-accent/[0.10] via-transparent to-violet2/[0.08] p-6 sm:p-7">
         <div className="pointer-events-none absolute -right-16 -top-16 h-52 w-52 rounded-full bg-accent/10 blur-3xl" aria-hidden />
         <div className="relative flex flex-wrap items-end justify-between gap-4">
-        <div>
+        <div className="flex min-w-0 items-start gap-3">
+          <button
+            onClick={() => setNavOpen(true)}
+            aria-label="Open navigation"
+            className="mt-1 shrink-0 rounded-lg border border-white/10 p-2.5 text-white transition hover:border-accent/40 md:hidden"
+          >
+            <List size={20} />
+          </button>
+          <div className="min-w-0">
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-accent">{sectionTitle}</p>
-          <h1 className="font-display mt-1 text-3xl font-bold tracking-tight text-white">{viewTitle}</h1>
+          <h1 className="font-display mt-1 text-2xl font-bold tracking-tight text-white sm:text-3xl">{viewTitle}</h1>
           {stats && (
             <p className="mt-2 text-sm text-muted">
               Updated {new Date(stats.generatedAt).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}
             </p>
           )}
+          </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <button onClick={() => load(token)} className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-black/30 px-4 py-2 text-sm text-slate-200 transition hover:border-accent/50">
             <ArrowClockwise size={16} className={loading ? "animate-spin" : ""} /> Refresh
           </button>

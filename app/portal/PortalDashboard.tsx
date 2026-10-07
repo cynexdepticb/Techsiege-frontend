@@ -323,7 +323,7 @@ export default function PortalDashboard() {
         <div className="relative flex flex-wrap items-start justify-between gap-5">
           <div className="min-w-0">
             <p className="text-xs text-muted">Signed in{name ? ` as ${name}` : ""}</p>
-            <h1 className="font-display mt-1 truncate text-3xl font-bold tracking-tight text-white sm:text-4xl">
+            <h1 className="font-display mt-1 break-words text-2xl font-bold tracking-tight text-white sm:text-4xl">
               {t.team_name}
             </h1>
             <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -395,7 +395,7 @@ export default function PortalDashboard() {
           <CardTitle icon={<UsersThree size={16} />} title={`Team · ${data.members.length} members`} />
           <ul className="space-y-3">
             {data.members.map((m) => (
-              <li key={m.id} className="flex items-center gap-3 rounded-xl border border-white/[0.07] bg-white/[0.02] p-3">
+              <li key={m.id} className="flex flex-wrap items-center gap-3 rounded-xl border border-white/[0.07] bg-white/[0.02] p-3">
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent/15 font-display text-sm font-bold text-accent" aria-hidden>
                   {initials(m.full_name)}
                 </span>
@@ -411,7 +411,7 @@ export default function PortalDashboard() {
                     onClick={() => download(m.ticket_id!)}
                     disabled={downloading === m.ticket_id}
                     title={m.pdf_filename ?? `Ticket ${m.ticket_id}`}
-                    className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-accent/40 px-3.5 py-1.5 text-xs font-semibold text-accent transition hover:bg-accent/10 disabled:opacity-60"
+                    className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-accent/40 px-3.5 py-2 text-xs font-semibold text-accent transition hover:bg-accent/10 disabled:opacity-60 max-sm:w-full max-sm:justify-center"
                   >
                     <Download size={13} /> {downloading === m.ticket_id ? "..." : m.ticket_status === "CHECKED_IN" ? "Checked in" : "Ticket"}
                   </button>
