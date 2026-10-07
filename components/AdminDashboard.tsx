@@ -675,18 +675,18 @@ function TeamsPanel({ token, onError }: { token: string; onError: (m: string) =>
             onClick={(e) => e.stopPropagation()}
           >
           <div>
-            <div className="flex items-start justify-between gap-4">
-              <div>
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
                 <p className="text-xs font-bold uppercase tracking-widest text-accent">Team details</p>
-                <h3 className="font-display mt-1 text-2xl font-bold text-white">{detail.team.team_name}</h3>
-                <p className="mt-1 font-mono text-sm text-accent">{detail.team.team_code}</p>
+                <h3 className="font-display mt-1 break-words text-xl font-bold text-white sm:text-2xl">{detail.team.team_name}</h3>
+                <p className="mt-1 break-all font-mono text-sm text-accent">{detail.team.team_code}</p>
               </div>
               <button
                 onClick={() => {
                   setDetail(null);
                   setSelected(null);
                 }}
-                className="shrink-0 rounded-full border border-white/15 px-3 py-1 text-xs text-slate-300 transition hover:border-accent/50 hover:text-white"
+                className="shrink-0 rounded-full border border-white/20 bg-white/5 px-4 py-2 text-xs font-semibold text-white transition hover:border-accent/50 hover:text-white"
               >
                 Close
               </button>
