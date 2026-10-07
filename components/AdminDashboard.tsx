@@ -512,6 +512,7 @@ function TeamsPanel({ token, onError }: { token: string; onError: (m: string) =>
   const [detail, setDetail] = useState<{ team: Record<string, string>; members: Record<string, string>[] } | null>(null);
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
 
   const auth = { Authorization: `Bearer ${token}` };
 
@@ -561,6 +562,7 @@ function TeamsPanel({ token, onError }: { token: string; onError: (m: string) =>
 
   async function openTeam(id: string) {
     setSelected(id);
+    setDetailLoading(true);
     setDetail(null);
     try {
       const res = await fetch(`/api/admin/registrations/${id}`, { headers: auth });
@@ -572,6 +574,8 @@ function TeamsPanel({ token, onError }: { token: string; onError: (m: string) =>
       setDetail({ team: data.team, members: data.members });
     } catch {
       onError("Could not reach the API.");
+    } finally {
+      setDetailLoading(false);
     }
   }
 
@@ -604,7 +608,7 @@ function TeamsPanel({ token, onError }: { token: string; onError: (m: string) =>
   }
 
   return (
-    <div className="mt-6 grid gap-5 lg:grid-cols-[minmax(0,1fr)_420px]">
+    <div className="mt-6">
       <section className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.02]">
         <div className="border-b border-white/10 p-5">
           <p className="text-xs font-bold uppercase tracking-widest text-accent">All teams</p>
@@ -643,14 +647,50 @@ function TeamsPanel({ token, onError }: { token: string; onError: (m: string) =>
         )}
       </section>
 
-      <aside className="h-fit rounded-2xl border border-white/10 bg-white/[0.02] p-5 lg:sticky lg:top-6">
-        {!detail ? (
-          <p className="text-sm text-muted">Select a team to see full details.</p>
-        ) : (
+      {detailLoading && !detail && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/80 p-0 sm:items-center sm:p-6"
+          aria-label="Loading team"
+        >
+          <div className="w-full max-w-2xl space-y-3 rounded-t-3xl border border-white/10 bg-[#0b1220] p-6 sm:rounded-3xl sm:p-8">
+            <Skeleton className="h-8 w-1/2" />
+            <Skeleton className="h-40" />
+          </div>
+        </div>
+      )}
+
+      {detail && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/80 p-0 sm:items-center sm:p-6"
+          onClick={() => {
+            setDetail(null);
+            setSelected(null);
+          }}
+          role="dialog"
+          aria-modal="true"
+          aria-label={`Team ${detail.team.team_name}`}
+        >
+          <div
+            className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-t-3xl border border-white/10 bg-[#0b1220] p-6 sm:rounded-3xl sm:p-8"
+            onClick={(e) => e.stopPropagation()}
+          >
           <div>
-            <p className="text-xs font-bold uppercase tracking-widest text-accent">Team details</p>
-            <h3 className="font-display mt-1 text-2xl font-bold text-white">{detail.team.team_name}</h3>
-            <p className="mt-1 font-mono text-sm text-accent">{detail.team.team_code}</p>
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-widest text-accent">Team details</p>
+                <h3 className="font-display mt-1 text-2xl font-bold text-white">{detail.team.team_name}</h3>
+                <p className="mt-1 font-mono text-sm text-accent">{detail.team.team_code}</p>
+              </div>
+              <button
+                onClick={() => {
+                  setDetail(null);
+                  setSelected(null);
+                }}
+                className="shrink-0 rounded-full border border-white/15 px-3 py-1 text-xs text-slate-300 transition hover:border-accent/50 hover:text-white"
+              >
+                Close
+              </button>
+            </div>
             <div className="mt-4 space-y-2 text-sm text-slate-300">
               <p><span className="text-muted">Institution:</span> {detail.team.institution}</p>
               <p><span className="text-muted">City:</span> {detail.team.city || "Not provided"}</p>
@@ -670,14 +710,14 @@ function TeamsPanel({ token, onError }: { token: string; onError: (m: string) =>
                 placeholder="Reason for reject or resubmission request"
                 className="mt-3 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:border-accent/60 focus:outline-none"
               />
-              <div className="mt-3 grid gap-2 sm:grid-cols-3">
-                <button onClick={() => decide("VERIFY")} disabled={!!busy} className="rounded-full bg-lime2 px-3 py-2 text-xs font-bold text-black transition hover:brightness-110 disabled:opacity-60">
+              <div className="mt-3 grid grid-cols-3 gap-2">
+                <button onClick={() => decide("VERIFY")} disabled={!!busy} className="rounded-full bg-lime2 px-3 py-2.5 text-xs font-bold text-black transition hover:brightness-110 disabled:opacity-60">
                   {busy === "VERIFY" ? "…" : "Verify"}
                 </button>
-                <button onClick={() => decide("RESUBMIT")} disabled={!!busy} className="rounded-full border border-amber-400/40 px-3 py-2 text-xs font-bold text-amber-200 transition hover:bg-amber-400/10 disabled:opacity-60">
+                <button onClick={() => decide("RESUBMIT")} disabled={!!busy} className="rounded-full border border-amber-400/40 px-3 py-2.5 text-xs font-bold text-amber-200 transition hover:bg-amber-400/10 disabled:opacity-60">
                   {busy === "RESUBMIT" ? "…" : "Resubmit"}
                 </button>
-                <button onClick={() => decide("REJECT")} disabled={!!busy} className="rounded-full border border-red-400/40 px-3 py-2 text-xs font-bold text-red-300 transition hover:bg-red-400/10 disabled:opacity-60">
+                <button onClick={() => decide("REJECT")} disabled={!!busy} className="rounded-full border border-red-400/40 px-3 py-2.5 text-xs font-bold text-red-300 transition hover:bg-red-400/10 disabled:opacity-60">
                   {busy === "REJECT" ? "…" : "Reject"}
                 </button>
               </div>
@@ -685,7 +725,7 @@ function TeamsPanel({ token, onError }: { token: string; onError: (m: string) =>
             <button
               onClick={() => destroy(detail.team.id, detail.team.team_name)}
               disabled={!!busy}
-              className="mt-4 inline-flex w-full items-center justify-center gap-1.5 rounded-full border border-red-500/40 px-4 py-2 text-xs font-semibold text-red-300 transition hover:bg-red-500/10 disabled:opacity-60"
+              className="mt-4 inline-flex w-full items-center justify-center gap-1.5 rounded-full border border-red-500/40 px-4 py-2.5 text-xs font-semibold text-red-300 transition hover:bg-red-500/10 disabled:opacity-60"
             >
               <Trash size={13} /> {busy === "DELETE" ? "Deleting…" : "Delete team permanently"}
             </button>
@@ -697,15 +737,16 @@ function TeamsPanel({ token, onError }: { token: string; onError: (m: string) =>
                     {m.full_name}
                     {m.is_lead && <span className="ml-2 rounded-full bg-accent/15 px-2 py-0.5 text-[10px] text-accent">LEAD</span>}
                   </p>
-                  <p className="mt-1 text-xs text-muted">{m.email}</p>
+                  <p className="mt-1 break-all text-xs text-muted">{m.email}</p>
                   {m.branch_year && <p className="mt-0.5 text-xs text-muted">{m.branch_year}</p>}
                   {m.ticket_id && <p className="mt-1.5 font-mono text-xs text-lime2">{m.ticket_id} / {m.ticket_status}</p>}
                 </li>
               ))}
             </ul>
           </div>
-        )}
-      </aside>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
