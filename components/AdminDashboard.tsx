@@ -661,7 +661,7 @@ function TeamsPanel({ token, onError }: { token: string; onError: (m: string) =>
 
       {detail && (
         <div
-          className="fixed inset-0 z-50 flex items-end justify-center bg-black/80 p-0 sm:items-center sm:p-6"
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/80 p-3 sm:items-center sm:p-6"
           onClick={() => {
             setDetail(null);
             setSelected(null);
@@ -671,7 +671,7 @@ function TeamsPanel({ token, onError }: { token: string; onError: (m: string) =>
           aria-label={`Team ${detail.team.team_name}`}
         >
           <div
-            className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-t-3xl border border-white/10 bg-[#0b1220] p-6 sm:rounded-3xl sm:p-8"
+            className="max-h-[85vh] w-full max-w-xl overflow-y-auto rounded-2xl border border-white/10 bg-[#0b1220] p-4 sm:rounded-3xl sm:p-7"
             onClick={(e) => e.stopPropagation()}
           >
           <div>
