@@ -12,6 +12,10 @@ const config: Config = {
         violet2: "#8b5cf6",
         lime2: "#a3e635",
         muted: "#94a3b8",
+        arcade: "#10182d",
+        cyan: "#56e7ff",
+        yellow: "#f5f25d",
+        orange: "#ef6b4a",
       },
       fontFamily: {
         display: ["var(--font-display)", "system-ui", "sans-serif"],

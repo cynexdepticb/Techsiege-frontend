@@ -1,18 +1,16 @@
 import type { Metadata } from "next";
 import { Space_Grotesk, Inter } from "next/font/google";
 import "./globals.css";
-import { SITE } from "@/lib/content";
-
 const display = Space_Grotesk({ subsets: ["latin"], variable: "--font-display", display: "swap" });
 const body = Inter({ subsets: ["latin"], variable: "--font-body", display: "swap" });
 
 export const metadata: Metadata = {
-  title: `${SITE.name} — Build. Automate. Act. | 24-Hour AI Agent Hackathon, Mangaluru`,
-  description: `${SITE.name} is a 24-hour offline AI-agent hackathon in Mangaluru. 200+ builders, 50+ teams, 6 tracks. Build real agentic AI systems — not chatbot wrappers.`,
-  metadataBase: new URL("https://techsiege.example.com"),
+  title: "TechSiege/26 — Five ways to show up",
+  description: "A campus-wide series of build, solve, defend, engineer and compete events.",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://techsiege.in"),
   openGraph: {
-    title: `${SITE.name} — Build. Automate. Act.`,
-    description: "24-hour offline AI-agent hackathon · Mangaluru · 200+ participants · 6 tracks",
+    title: "TechSiege/26 — Five ways to show up",
+    description: "A campus-wide series of events at AIET, Mangaluru.",
     type: "website",
   },
 };
