@@ -4,6 +4,8 @@ import "./globals.css";
 const display = Space_Grotesk({ subsets: ["latin"], variable: "--font-display", display: "swap" });
 const body = Inter({ subsets: ["latin"], variable: "--font-body", display: "swap" });
 
+
+
 export const metadata: Metadata = {
   title: "TechSiege/26 — Five ways to show up",
   description: "A campus-wide series of build, solve, defend, engineer and compete events.",
