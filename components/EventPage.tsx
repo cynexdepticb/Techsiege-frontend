@@ -1,7 +1,36 @@
 import Link from "next/link";
-import type { EventDefinition } from "@/lib/events";
 import SiteHeader from "@/components/SiteHeader";
+import type { EventDefinition } from "@/lib/events";
 
 export default function EventPage({ event }: { event: EventDefinition }) {
- return <div className="min-h-screen bg-[#10182d] text-slate-100"><SiteHeader /><main className="relative overflow-hidden"><div className="absolute inset-0 arcade-grid opacity-40" aria-hidden="true" /><div className="relative mx-auto max-w-7xl px-5 pb-24 pt-12 sm:px-8 sm:pt-16"><Link href="/#events" className="font-mono text-xs uppercase tracking-[.14em] text-[#56e7ff] transition hover:text-[#f5f25d]">← Event select</Link><div className="mt-14 grid gap-14 lg:grid-cols-[1fr_380px] lg:items-end"><div><p className="font-mono text-sm" style={{ color: event.accent }}>{event.number} / {event.category} / READY</p><h1 className="mt-5 max-w-4xl font-mono text-5xl font-black uppercase leading-[.9] tracking-[-.07em] text-[#f5f25d] [text-shadow:4px_4px_0_#ef6b4a] sm:text-8xl">{event.name}</h1><p className="mt-5 font-mono text-sm uppercase tracking-[.12em]" style={{ color: event.accent }}>{event.tagline}</p><p className="mt-6 max-w-2xl text-2xl leading-tight text-slate-200 sm:text-3xl">{event.hook}</p></div><div className="border-2 border-[#56e7ff]/50 bg-[#182443] p-5" style={{ boxShadow: `5px 5px 0 ${event.accent}` }}><p className="font-mono text-xs uppercase leading-6 text-slate-300">{event.description}</p><Link href={`/events/${event.slug}/register`} className="mt-8 inline-flex border-2 border-[#f5f25d] bg-[#f5f25d] px-6 py-3 font-mono text-xs font-black uppercase text-[#10182d] transition hover:bg-transparent hover:text-[#f5f25d]" aria-disabled="true">Registration opens soon</Link></div></div><section className="mt-20 border-t-2 border-[#56e7ff]/30 pt-8" aria-labelledby="event-details"><div className="flex items-center justify-between"><h2 id="event-details" className="font-mono text-lg font-bold uppercase text-white">Mission details</h2><span className="font-mono text-[10px] uppercase tracking-[.18em] text-[#56e7ff]">Status / Pending brief</span></div><div className="mt-6 grid gap-3 sm:grid-cols-3">{event.details.map((detail) => <p key={detail} className="border border-[#56e7ff]/30 bg-[#182443] p-5 font-mono text-xs leading-6 text-slate-300">{detail}</p>)}</div></section><p className="mt-16 max-w-xl font-mono text-xs leading-6 text-slate-500">The full mission brief, eligibility, rules, prizes and entry fee will load here when confirmed.</p></div></main></div>;
+  const accent = { "--event-accent": event.accent } as React.CSSProperties;
+
+  return (
+    <div className="detail-shell">
+      <SiteHeader />
+      <main className="relative overflow-clip">
+        <div className="arcade-grid absolute inset-0 opacity-30" aria-hidden="true" />
+        <div className="container relative py-16 sm:py-24" style={accent}>
+          <Link href="/#events" className="page-link">Event select</Link>
+          <div className="mt-12 grid gap-12 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-end">
+            <div>
+              <p className="event-number">{event.number} · {event.category}</p>
+              <h1 className="detail-title mt-5">{event.name}</h1>
+              <p className="mt-5 max-w-xl text-lg text-ink2 sm:text-xl">{event.tagline}</p>
+              <p className="mt-8 max-w-2xl text-2xl leading-tight text-ink sm:text-3xl">{event.hook}</p>
+            </div>
+            <aside className="detail-card">
+              <p className="text-sm leading-7 text-ink2">{event.description}</p>
+              <Link href={`/events/${event.slug}/register`} className="button mt-8">Register your team</Link>
+            </aside>
+          </div>
+          <section className="mt-20 border-t border-rule pt-8" aria-labelledby="event-details">
+            <h2 id="event-details" className="section-title text-3xl">Mission details</h2>
+            <ul className="detail-list">{event.details.map((detail) => <li key={detail}>{detail}</li>)}</ul>
+          </section>
+          <p className="mt-16 max-w-xl text-sm leading-7 text-muted">The mission brief may evolve, but your team can register now and secure its place in the arena.</p>
+        </div>
+      </main>
+    </div>
+  );
 }

@@ -1,7 +1,22 @@
 import Link from "next/link";
-import type { EventDefinition } from "@/lib/events";
 import SiteHeader from "@/components/SiteHeader";
+import type { EventDefinition } from "@/lib/events";
 
 export default function RegistrationPlaceholder({ event }: { event: EventDefinition }) {
-  return <div className="min-h-screen bg-[#10182d] text-slate-100"><SiteHeader /><main className="relative flex min-h-[calc(100vh-65px)] items-center overflow-hidden"><div className="absolute inset-0 arcade-grid opacity-30" aria-hidden="true" /><div className="relative mx-auto w-full max-w-3xl px-5 py-20 sm:px-8"><div className="border-2 border-[#56e7ff]/50 bg-[#182443] p-6 shadow-[6px_6px_0_#ef6b4a] sm:p-10"><div className="flex items-center justify-between border-b border-[#56e7ff]/30 pb-4 font-mono text-[10px] uppercase tracking-[.18em]"><span style={{ color: event.accent }}>{event.number} / {event.name}</span><span className="text-[#56e7ff]">Registration terminal</span></div><h1 className="mt-10 font-mono text-4xl font-black uppercase leading-none text-[#f5f25d] sm:text-6xl">Access<br />not ready.</h1><p className="mt-7 max-w-xl font-mono text-sm leading-7 text-slate-300">The {event.name} entry form is being configured with its own fee, rules and eligibility. Check back when the terminal goes live.</p><div className="mt-9 flex flex-wrap gap-3"><span className="border border-[#ef6b4a] px-3 py-2 font-mono text-[10px] uppercase text-[#ef6b4a]">Status: offline</span><span className="border border-[#56e7ff]/40 px-3 py-2 font-mono text-[10px] uppercase text-[#56e7ff]">Fee: pending</span></div><Link href={`/events/${event.slug}`} className="mt-10 inline-flex border-2 border-[#56e7ff] px-5 py-3 font-mono text-xs font-bold uppercase text-[#56e7ff] transition hover:bg-[#56e7ff] hover:text-[#10182d]">← Return to mission</Link></div></div></main></div>;
+  return (
+    <div className="detail-shell">
+      <SiteHeader />
+      <main className="relative flex min-h-[calc(100dvh-65px)] items-center overflow-clip">
+        <div className="arcade-grid absolute inset-0 opacity-30" aria-hidden="true" />
+        <div className="container relative w-full py-16" style={{ "--event-accent": event.accent } as React.CSSProperties}>
+          <div className="detail-card mx-auto max-w-2xl">
+            <p className="event-number">{event.number} · {event.name}</p>
+            <h1 className="detail-title mt-10">Access not ready.</h1>
+            <p className="mt-7 max-w-xl text-ink2">The {event.name} entry form is being configured with its own fee, rules and eligibility. Check back when the terminal goes live.</p>
+            <Link href={`/events/${event.slug}`} className="button button--quiet mt-10">Return to mission</Link>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
 }
