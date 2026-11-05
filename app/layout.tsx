@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Space_Grotesk, Inter } from "next/font/google";
+import { FEST } from "@/lib/events";
 import "./globals.css";
 const display = Space_Grotesk({ subsets: ["latin"], variable: "--next-font-display", display: "swap" });
 const body = Inter({ subsets: ["latin"], variable: "--next-font-body", display: "swap" });
@@ -7,12 +8,12 @@ const body = Inter({ subsets: ["latin"], variable: "--next-font-body", display: 
 
 
 export const metadata: Metadata = {
-  title: "TechSiege 2026 — Five ways to show up",
+  title: `${FEST.name} — ${FEST.tagline}`,
   description: "A campus-wide series of build, solve, defend, engineer and compete events.",
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://techsiege.in"),
   openGraph: {
-    title: "TechSiege 2026 — Five ways to show up",
-    description: "A campus-wide series of events at AIET, Mangaluru.",
+    title: `${FEST.name} — ${FEST.tagline}`,
+    description: `A campus-wide series of events at ${FEST.address}.`,
     type: "website",
   },
 };

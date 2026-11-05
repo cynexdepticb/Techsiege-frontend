@@ -8,7 +8,7 @@ export default function RegistrationPlaceholder({ event }: { event: EventDefinit
       <SiteHeader />
       <main className="relative flex min-h-[calc(100dvh-65px)] items-center overflow-clip">
         <div className="arcade-grid absolute inset-0 opacity-30" aria-hidden="true" />
-        <div className="container relative w-full py-16" style={{ "--event-accent": event.accent } as React.CSSProperties}>
+        <div className="container relative w-full py-16" style={{ "--event-accent": event.accentColor } as React.CSSProperties}>
           <div className="detail-card mx-auto max-w-2xl">
             <p className="event-number">{event.number} · {event.name}</p>
             <h1 className="detail-title mt-10">Access not ready.</h1>
