@@ -160,7 +160,6 @@ For each event, the following content is still required:
 - Entry fee
 - Payment instructions or payment gateway
 - Registration form fields
-- Registration deadline
 - Event rules
 - Prize details
 - Contact person or support email

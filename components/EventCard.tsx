@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { EVENT_STATUS_LABELS, type EventDefinition } from "@/lib/events";
 
-type DetailIconName = "teamSize" | "fee" | "prize" | "deadline";
+type DetailIconName = "teamSize" | "fee" | "prize";
 
 export default function EventCard({ event }: { event: EventDefinition }) {
   const [teamFormat, attendance] = event.format.split(" · ");
@@ -9,7 +9,6 @@ export default function EventCard({ event }: { event: EventDefinition }) {
     { key: "teamSize", label: "Team", value: event.teamSize },
     { key: "fee", label: "Fee", value: event.fee },
     { key: "prize", label: "Prize", value: event.prize },
-    { key: "deadline", label: "Deadline", value: event.deadline },
   ] as const;
 
   return (
@@ -56,6 +55,5 @@ function DetailIcon({ name }: { name: DetailIconName }) {
   const common = { "aria-hidden": true, viewBox: "0 0 24 24", width: 14, height: 14, fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
   if (name === "teamSize") return <svg {...common}><circle cx="9" cy="8" r="3" /><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6" /><path d="M16 5a3 3 0 0 1 0 6" /><path d="M21 20c0-2.4-1.4-4.5-3.5-5.5" /></svg>;
   if (name === "fee") return <svg {...common}><path d="M6 4h10" /><path d="M6 8h9" /><path d="M6 12h9" /><path d="M6 4c4.5 2.5 4.5 6.5 0 8l8 8" /></svg>;
-  if (name === "prize") return <svg {...common}><path d="M8 4h8v5a4 4 0 0 1-8 0V4Z" /><path d="M8 6H4v1a4 4 0 0 0 4 4" /><path d="M16 6h4v1a4 4 0 0 1-4 4" /><path d="M12 13v4" /><path d="M8 21h8" /></svg>;
-  return <svg {...common}><rect x="4" y="5" width="16" height="15" rx="1" /><path d="M8 3v4M16 3v4M4 10h16" /></svg>;
+  return <svg {...common}><path d="M8 4h8v5a4 4 0 0 1-8 0V4Z" /><path d="M8 6H4v1a4 4 0 0 0 4 4" /><path d="M16 6h4v1a4 4 0 0 1-4 4" /><path d="M12 13v4" /><path d="M8 21h8" /></svg>;
 }

@@ -22,13 +22,13 @@ export type FestDefinition = {
   tagline: string;
   startDate: string;
   endDate: string;
+  dates: string;
   venue: string;
   address: string;
   mapLink: string;
   organizer: string;
   contactEmail: string;
   whatsappLink: string;
-  registrationDeadline: string;
   prizePool: string;
   about: string;
   schedule: { id: string; label: string; date: string; entries: { time: string; eventId: string; activity: string }[] }[];
@@ -54,7 +54,7 @@ export type EventDefinition = {
   maxTeamSize: number;
   fee: string;
   prize: string;
-  deadline: string;
+  deadline?: string;
   status: EventStatus;
   rules: string[];
   judgingCriteria: string[];
@@ -74,13 +74,13 @@ export const FEST: FestDefinition = {
   tagline: "Five ways to show up. Five arenas. Zero room to play safe.",
   startDate: "2026-12-04T11:00:00+05:30",
   endDate: "2026-12-05T18:00:00+05:30",
+  dates: "December 4 & 5, 2026",
   venue: "Alva's Institute of Engineering and Technology",
   address: "Alva's Institute of Engineering and Technology, Mijar, Moodbidri",
   mapLink: "https://maps.app.goo.gl/HbmCMgmncAud9Az37",
   organizer: "CSE (IoT, Cybersecurity and Blockchain Technology)",
   contactEmail: "cynex.depticb@gmail.com",
   whatsappLink: "https://wa.me/917349097923",
-  registrationDeadline: "12 Nov",
   prizePool: "₹85,000",
   about: "Techsiege brings builders, problem-solvers, engineers, and competitors together at Alva's Institute of Engineering and Technology for a focused campus competition festival.",
   schedule: [
@@ -120,7 +120,6 @@ export const EVENTS: EventDefinition[] = [
     maxTeamSize: 4,
     fee: "₹600 per team",
     prize: "₹40,000",
-    deadline: "12 Nov",
     status: "open",
     rules: [
       "Problem statements will be revealed on the event day.",
@@ -169,7 +168,6 @@ export const EVENTS: EventDefinition[] = [
     maxTeamSize: 4,
     fee: "₹500 per team",
     prize: "₹25,000",
-    deadline: "12 Nov",
     status: "open",
     rules: [
       "This is a Jeopardy-style CTF: solve independent challenges, capture flags, and submit them on the official scoreboard.",
@@ -214,7 +212,6 @@ export const EVENTS: EventDefinition[] = [
     maxTeamSize: 2,
     fee: "₹200 per team",
     prize: "₹6,000",
-    deadline: "12 Nov",
     status: "open",
     rules: [],
     judgingCriteria: [],
@@ -245,7 +242,6 @@ export const EVENTS: EventDefinition[] = [
     maxTeamSize: 2,
     fee: "₹200 per team",
     prize: "₹6,000",
-    deadline: "12 Nov",
     status: "open",
     rules: [],
     judgingCriteria: [],
@@ -276,7 +272,6 @@ export const EVENTS: EventDefinition[] = [
     maxTeamSize: 4,
     fee: "₹200 per team",
     prize: "₹5,000",
-    deadline: "12 Nov",
     status: "open",
     rules: [],
     judgingCriteria: [],

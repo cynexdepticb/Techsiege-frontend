@@ -13,7 +13,6 @@ export default function EventPage({ event }: { event: EventDefinition }) {
     ["Team size", event.teamSize],
     ["Fee", event.fee],
     ["Prize", event.prize],
-    ["Registration deadline", event.deadline],
   ];
 
   return (
